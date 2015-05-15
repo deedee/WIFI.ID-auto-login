@@ -1,7 +1,0 @@
-auto_login_wifi.id.py
-setup.py
-WIFI.ID_Auto_Login.egg-info/PKG-INFO
-WIFI.ID_Auto_Login.egg-info/SOURCES.txt
-WIFI.ID_Auto_Login.egg-info/dependency_links.txt
-WIFI.ID_Auto_Login.egg-info/requires.txt
-WIFI.ID_Auto_Login.egg-info/top_level.txt
