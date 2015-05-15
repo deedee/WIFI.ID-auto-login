@@ -55,16 +55,19 @@ def save_config(config, config_file):
         config.write(f)
 
 
-def update_route(router, config, routing_marks, config_file):
-    if router and not router['use_wifiid']:
+def update_route(router, config, routing_marks, failsafe_route, config_file, use_wifiid):
+    if router and router['use_wifiid'] != use_wifiid:
         try:
             rb = RouterboardAPI(router['host'], username=router['username'], password=router['password'],port=router['port'])
             route = rb.get_resource('/ip/route')
             route_all = route.get()
             route_wifiid = filter(lambda x: x if 'routing-mark' in x and x['routing-mark'] in routing_marks else None, route_all)
             for r in route_wifiid:
-                route.set(id=r['id'], gateway=router['gateway'])
-            config.set('mikrotik', 'use_wifiid', True)
+                if use_wifiid:
+                    route.set(id=r['id'], gateway=router['gateway'])
+                else:
+                    route.set(id=r['id'], gateway=failsafe_route[routing_marks.index(r['routing-mark'])])
+            config.set('mikrotik', 'use_wifiid', use_wifiid)
             save_config(config, config_file)
         except:
             pass
@@ -150,6 +153,7 @@ def main(config_file='/etc/auto_login.wifi.id.cfg'):
     req = open_url(requests.get, 'test_url', test_url)
     if not req:
         log.exception('WIFI.ID - Failed to open test_url for ' + str(MAX_RETRIES) + ' times. I gave up!')
+        update_route(router, config, routing_marks, failsafe_route, config_file, False)
         sys.exit(666)
 
     log.debug('WIFI.ID - parse html of test url' )
@@ -159,7 +163,7 @@ def main(config_file='/etc/auto_login.wifi.id.cfg'):
         meta = doc.xpath('/html/head/meta[@http-equiv="Refresh"]')
         if not meta:
             log.info('WIFI.ID - Good News.. We were logged in')
-            update_route(router, config, routing_marks, config_file)
+            update_route(router, config, routing_marks, failsafe_route, config_file, True)
             sys.exit(0)
 
         meta = meta[0]
@@ -219,22 +223,14 @@ def main(config_file='/etc/auto_login.wifi.id.cfg'):
         log.debug('WIFI.ID - Go to redirect url')
         req = open_url(requests.get, 'go to redirect url', res['redirect'])
         log.debug('WIFI.ID - Done. Happy browsinG')
-        update_route(router, config, routing_marks, config_file)
+        update_route(router, config, routing_marks, failsafe_route, config_file, True)
     else:
         log.error('WIFI.ID - All account is sucks, please buy one')
         log.error('WIFI.ID - routing will set to failsafe')
         if not router['use_wifiid']:
             sys.exit(0)
         try:
-            rb = RouterboardAPI(router['host'], username=router['username'], password=router['password'],port=router['port'])
-            route = rb.get_resource('/ip/route')
-            route_all = route.get()
-            route_wifiid = filter(lambda x: x if x.has_key('routing-mark') and x['routing-mark'] in routing_marks else None, route_all)
-            for r in route_wifiid:
-                route.set(id=r['id'], gateway=failsafe_route[routing_marks.index(r['routing-mark'])])
-                time.sleep(2)
-            config.set('mikrotik', 'use_wifiid', False)
-            save_config(config, config_file)
+            update_route(router, config, routing_marks, failsafe_route, config_file, False)
         except:
             pass
     
