@@ -1,3 +1,6 @@
+# WIFI.ID-auto-login
+
+Script untuk selalu konek ke WIFI.ID hotspot, untuk yang ingin **memanfaatkan** 
 bandwidth WIFI.ID :).
 Di eksekusi melalui cron job. 
 
