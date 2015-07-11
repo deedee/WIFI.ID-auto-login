@@ -120,7 +120,7 @@ def main(config_file='/etc/auto_login.wifi.id.cfg'):
                         if not valid:
                             config.set(section, 'active', False)
                             save_config(config, config_file)
-                            raise Exception('account %s time limit has been reach. Deactivated...' %
+                            log.exception('account %s time limit has been reach. Deactivated...' %
                                             account['username'])
                     except Exception as e:
                         log.exception('WIFI.ID - ' + str(e))
@@ -194,6 +194,7 @@ def main(config_file='/etc/auto_login.wifi.id.cfg'):
 
         if not req:
             log.exception('WIFI.ID - Failed to login with username ' + account['username'] + '. Try next account')
+            log.debug("Response: %s and content: %s" %(req.status_code, req.text))
             set_next_try(account['section'], config, config_file)
             continue
         log.debug('WIFI.ID - Result :' + str(req.json()))
